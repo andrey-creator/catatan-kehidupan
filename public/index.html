@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Catatan Kehidupan — kepingan hidup dalam kata.">
+<meta name="theme-color" content="#f1eee8">
+<title>Catatan Kehidupan — Kepingan hidup dalam kata.</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Catatan Kehidupan">
+<meta property="og:title" content="Catatan Kehidupan">
+<meta property="og:description" content="Kepingan hidup dalam kata. Jurnal tulisan Aryasatya Keandre.">
+<meta property="og:locale" content="id_ID">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<nav><div class="shell">
+  <a class="brand" href="#/" id="brand">Catatan Kehidupan</a>
+  <div class="links up">
+    <a href="#/">Tulisan</a>
+    <a href="https://www.instagram.com/andreyson_hamilton_a" target="_blank" rel="noreferrer">Instagram</a>
+    <a href="https://youtube.com/@aryasatyakeandre" target="_blank" rel="noreferrer">YouTube</a>
+    <button class="btn" id="write">+ Tulis</button>
+  </div>
+</div></nav>
+
+<main id="app"></main>
+
+<footer class="shell up">
+  <span>© <span id="yr">2026</span> Aryasatya Keandre</span>
+  <a href="#" id="potret">Jurnal visual: Potret Kehidupan →</a>
+</footer>
+
+<dialog id="dlg"><form method="dialog" id="frm">
+  <h3 id="dt">Tulisan baru</h3>
+  <label class="up">Judul<input type="text" id="f-title" required maxlength="120"></label>
+  <label class="up">Kategori<select id="f-tag"><option>Harian</option><option>Perjalanan</option><option>Refleksi</option><option>Catatan</option></select></label>
+  <label class="up">Isi tulisan<textarea id="f-body" required placeholder="Pisahkan paragraf dengan baris kosong."></textarea></label>
+  <div class="row"><button type="button" class="btn" id="cancel">Batal</button><button class="btn" id="save" value="ok">Simpan</button></div>
+</form></dialog>
+
+<noscript><p class="shell">Situs ini membutuhkan JavaScript untuk menampilkan tulisan.</p></noscript>
+<script src="/assets/entries.js"></script>
+<script src="/assets/app.js"></script>
+</body>
+</html>
