@@ -20,36 +20,44 @@ function list(){
    tags.map(function(t){return '<button class="chip" aria-pressed="'+(t===tagF)+'" data-tag="'+esc(t)+'">'+esc(t)+'</button>'}).join("")+
    '</div><input class="search" id="q" type="search" placeholder="Cari tulisan…" aria-label="Cari tulisan" value="'+esc(q)+'"></div>';
   h+=f.length?f.map(function(e){
-    return '<div class="entry" tabindex="0" role="link" data-id="'+esc(e.id)+'"><time class="up">'+fd(e.date)+'</time>'+
-    '<div><h2>'+esc(e.title)+'</h2><p>'+esc(exc(e.body))+'</p></div><div class="up rt"><span class="tag">'+esc(e.tag)+'</span><br>'+rt(e.body)+'</div></div>'}).join(""):'<p class="empty">Belum ada tulisan yang cocok.</p>';
+    return '<a class="entry" href="/tulisan/'+encodeURIComponent(e.id)+'"><time class="up">'+fd(e.date)+'</time>'+
+    '<div><h2>'+esc(e.title)+'</h2><p>'+esc(exc(e.body))+'</p></div><div class="up rt"><span class="tag">'+esc(e.tag)+'</span><br>'+rt(e.body)+'</div></a>'}).join(""):'<p class="empty">Belum ada tulisan yang cocok.</p>';
   app.innerHTML=h+'</section>';
   app.querySelectorAll(".chip").forEach(function(b){b.onclick=function(){tagF=b.dataset.tag;list()}});
   var qi=document.getElementById("q");
   qi.oninput=function(){q=qi.value.toLowerCase().trim();var p=qi.selectionStart;list();var n=document.getElementById("q");n.focus();n.setSelectionRange(p,p)};
-  app.querySelectorAll(".entry").forEach(function(r){
-    var go=function(){location.hash="#/tulisan/"+r.dataset.id};
-    r.onclick=go;r.onkeydown=function(e){if(e.key==="Enter")go()}});
 }
 function read(id){
   var items=all(),i=items.findIndex(function(e){return e.id===id});
-  if(i<0){location.hash="#/";return}
+  if(i<0){go("/",true);return}
   var e=items[i];
   document.title=e.title+" — Catatan Kehidupan";
   var nx=items[i-1],pv=items[i+1];
-  app.innerHTML='<article><button class="back up" id="bk">← Semua tulisan</button>'+
+  app.innerHTML='<article><a class="back up" href="/">← Semua tulisan</a>'+
    '<div class="up mt">'+fd(e.date)+' · <span class="tag">'+esc(e.tag)+'</span> · '+rt(e.body)+'</div>'+
    '<h1>'+esc(e.title)+'</h1><div class="body">'+e.body.split(/\n{2,}/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>"}).join("")+'</div>'+
-      '<div class="pn">'+(pv?'<button data-g="'+esc(pv.id)+'"><span class="up">← Sebelumnya</span><br>'+esc(pv.title)+'</button>':'<span></span>')+
-   (nx?'<button class="tr" data-g="'+esc(nx.id)+'"><span class="up">Berikutnya →</span><br>'+esc(nx.title)+'</button>':'')+'</div></article>';
+      '<div class="pn">'+(pv?'<a href="/tulisan/'+encodeURIComponent(pv.id)+'"><span class="up">← Sebelumnya</span><br>'+esc(pv.title)+'</a>':'<span></span>')+
+   (nx?'<a class="tr" href="/tulisan/'+encodeURIComponent(nx.id)+'"><span class="up">Berikutnya →</span><br>'+esc(nx.title)+'</a>':'')+'</div></article>';
   window.scrollTo(0,0);
-  document.getElementById("bk").onclick=function(){location.hash="#/"};
-  app.querySelectorAll("[data-g]").forEach(function(b){b.onclick=function(){location.hash="#/tulisan/"+b.dataset.g}});
 }
-function route(){var m=location.hash.match(/^#\/tulisan\/(.+)$/);m?read(decodeURIComponent(m[1])):list()}
-window.addEventListener("hashchange",route);
+function go(path,replace){history[replace?"replaceState":"pushState"](null,"",path);route()}
+function route(){
+  var h=location.hash.match(/^#\/tulisan\/(.+)$/);
+  if(h){history.replaceState(null,"","/tulisan/"+h[1])}
+  var m=location.pathname.match(/^\/tulisan\/([^\/]+)\/?$/);
+  var id=null;if(m){try{id=decodeURIComponent(m[1])}catch(e){}}
+  id?read(id):list();
+}
+window.addEventListener("popstate",route);
+document.addEventListener("click",function(e){
+  if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+  var a=e.target.closest&&e.target.closest("a[href]");
+  if(!a||a.target||a.origin!==location.origin)return;
+  if(a.pathname==="/"||/^\/tulisan\/[^\/]+\/?$/.test(a.pathname)){e.preventDefault();go(a.pathname+a.search)}
+});
 
 document.getElementById("yr").textContent=new Date().getFullYear();
 var pl=document.getElementById("potret");
 if(SITE.potretUrl){pl.href=SITE.potretUrl}else{pl.hidden=true}
-app.innerHTML='<p class="shell empty">Memuat tulisan…</p>';
+if(!app.firstElementChild)app.innerHTML='<p class="shell empty">Memuat tulisan…</p>';
 fetch("/api/entries").then(function(r){if(!r.ok)throw new Error();return r.json()}).then(function(d){ENTRIES=d;route()}).catch(function(){app.innerHTML='<p class="shell empty">Tulisan belum bisa dimuat. Coba muat ulang halaman.</p>'});
