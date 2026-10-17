@@ -1,4 +1,4 @@
-var tagF="Semua", q="";
+var ENTRIES=[], tagF="Semua", q="";
 function all(){return ENTRIES.slice().sort(function(a,b){return a.date<b.date?1:-1})}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 var BLN=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -51,4 +51,5 @@ window.addEventListener("hashchange",route);
 document.getElementById("yr").textContent=new Date().getFullYear();
 var pl=document.getElementById("potret");
 if(SITE.potretUrl){pl.href=SITE.potretUrl}else{pl.hidden=true}
-route();
+app.innerHTML='<p class="shell empty">Memuat tulisan…</p>';
+fetch("/api/entries").then(function(r){if(!r.ok)throw new Error();return r.json()}).then(function(d){ENTRIES=d;route()}).catch(function(){app.innerHTML='<p class="shell empty">Tulisan belum bisa dimuat. Coba muat ulang halaman.</p>'});
