@@ -1,7 +1,5 @@
-var KEY="catatan-kehidupan:own", mine=[], tagF="Semua", q="";
-function load(){try{mine=JSON.parse(localStorage.getItem(KEY)||"[]")||[]}catch(e){mine=[]}}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(mine))}catch(e){}}
-function all(){return mine.concat(ENTRIES).sort(function(a,b){return a.date<b.date?1:-1})}
+var tagF="Semua", q="";
+function all(){return ENTRIES.slice().sort(function(a,b){return a.date<b.date?1:-1})}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 var BLN=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 function fd(d){var p=d.split("-");return +p[2]+" "+BLN[+p[1]-1]+" "+p[0]}
@@ -35,36 +33,22 @@ function list(){
 function read(id){
   var items=all(),i=items.findIndex(function(e){return e.id===id});
   if(i<0){location.hash="#/";return}
-  var e=items[i],isMine=mine.some(function(m){return m.id===id});
+  var e=items[i];
   document.title=e.title+" — Catatan Kehidupan";
   var nx=items[i-1],pv=items[i+1];
   app.innerHTML='<article><button class="back up" id="bk">← Semua tulisan</button>'+
    '<div class="up mt">'+fd(e.date)+' · <span class="tag">'+esc(e.tag)+'</span> · '+rt(e.body)+'</div>'+
    '<h1>'+esc(e.title)+'</h1><div class="body">'+e.body.split(/\n{2,}/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>"}).join("")+'</div>'+
-   (isMine?'<p><button class="back up" id="del">Hapus tulisan ini</button></p>':'')+
-   '<div class="pn">'+(pv?'<button data-g="'+esc(pv.id)+'"><span class="up">← Sebelumnya</span><br>'+esc(pv.title)+'</button>':'<span></span>')+
+      '<div class="pn">'+(pv?'<button data-g="'+esc(pv.id)+'"><span class="up">← Sebelumnya</span><br>'+esc(pv.title)+'</button>':'<span></span>')+
    (nx?'<button class="tr" data-g="'+esc(nx.id)+'"><span class="up">Berikutnya →</span><br>'+esc(nx.title)+'</button>':'')+'</div></article>';
   window.scrollTo(0,0);
   document.getElementById("bk").onclick=function(){location.hash="#/"};
   app.querySelectorAll("[data-g]").forEach(function(b){b.onclick=function(){location.hash="#/tulisan/"+b.dataset.g}});
-  var d=document.getElementById("del");
-  if(d)d.onclick=function(){if(confirm("Hapus tulisan ini?")){mine=mine.filter(function(m){return m.id!==id});persist();location.hash="#/"}};
 }
 function route(){var m=location.hash.match(/^#\/tulisan\/(.+)$/);m?read(decodeURIComponent(m[1])):list()}
 window.addEventListener("hashchange",route);
 
-var dlg=document.getElementById("dlg"),frm=document.getElementById("frm");
-document.getElementById("write").onclick=function(){frm.reset();dlg.showModal()};
-document.getElementById("cancel").onclick=function(){dlg.close()};
-frm.onsubmit=function(ev){
-  ev.preventDefault();
-  var t=document.getElementById("f-title").value.trim(),b=document.getElementById("f-body").value.trim();
-  if(!t||!b)return;
-  var id="u"+Date.now();
-  mine.push({id:id,date:new Date().toISOString().slice(0,10),tag:document.getElementById("f-tag").value,title:t,body:b});
-  persist();dlg.close();location.hash="#/tulisan/"+id;
-};
 document.getElementById("yr").textContent=new Date().getFullYear();
 var pl=document.getElementById("potret");
 if(SITE.potretUrl){pl.href=SITE.potretUrl}else{pl.hidden=true}
-load();route();
+route();

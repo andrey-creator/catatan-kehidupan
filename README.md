@@ -28,7 +28,7 @@ Buka `public/assets/entries.js`, tambahkan objek baru ke `ENTRIES`:
 - Pisahkan paragraf dengan `\n\n`.
 - Isi `SITE.potretUrl` dengan alamat situs Potret agar tautan di footer muncul.
 
-Tombol **+ Tulis** di situs menyimpan tulisan hanya di browser pemilik (localStorage), tidak ikut ter-deploy. Untuk tulisan permanen, tambahkan lewat `entries.js` lalu push.
+Tulisan hanya bisa ditambah oleh pemilik repositori: pengunjung tidak punya cara menambah atau mengubah isi situs. Tambahkan lewat `entries.js`, lalu push.
 
 ## Menjalankan lokal
 
