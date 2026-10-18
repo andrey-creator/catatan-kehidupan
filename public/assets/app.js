@@ -42,6 +42,7 @@ function read(id){
 }
 function go(path,replace){history[replace?"replaceState":"pushState"](null,"",path);route()}
 function route(){
+  if(/^\/tentang\/?$/.test(location.pathname)){if(!app.querySelector(".about"))location.reload();return}
   var h=location.hash.match(/^#\/tulisan\/(.+)$/);
   if(h){history.replaceState(null,"","/tulisan/"+h[1])}
   var m=location.pathname.match(/^\/tulisan\/([^\/]+)\/?$/);

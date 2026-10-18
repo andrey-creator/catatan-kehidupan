@@ -83,3 +83,6 @@ textarea{min-height:18rem;resize:vertical;font-family:Georgia,serif;line-height:
 .links button{text-transform:inherit;letter-spacing:inherit}
 .frm label{display:grid;gap:.3rem}
 input[type=password]{font-size:1rem}
+
+.about .body a{border-bottom:1px solid var(--sage);transition:color .25s}
+.about .body a:hover{color:var(--sage)}

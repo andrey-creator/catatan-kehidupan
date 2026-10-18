@@ -1,4 +1,4 @@
-// GET /sitemap.xml — halaman utama + semua tulisan yang terbit.
+// GET /sitemap.xml — halaman utama + tentang + semua tulisan yang terbit.
 import { baseUrl, entryUrl } from "../lib/seo.js";
 
 const x = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -11,7 +11,8 @@ export async function onRequestGet({ request, env }) {
   } catch { /* tetap sajikan halaman utama */ }
   const last = (r) => (r.updated_at || r.date).slice(0, 10);
   const newest = rows.map(last).sort().pop();
-  const urls = [`  <url><loc>${x(base + "/")}</loc>${newest ? `<lastmod>${newest}</lastmod>` : ""}</url>`]
+  const urls = [`  <url><loc>${x(base + "/")}</loc>${newest ? `<lastmod>${newest}</lastmod>` : ""}</url>`,
+    `  <url><loc>${x(base + "/tentang")}</loc></url>`]
     .concat(rows.map((r) => `  <url><loc>${x(entryUrl(base, r.id))}</loc><lastmod>${last(r)}</lastmod></url>`));
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
   return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=300" } });
