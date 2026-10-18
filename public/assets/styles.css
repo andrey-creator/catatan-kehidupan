@@ -90,3 +90,10 @@ input[type=password]{font-size:1rem}
 .links a.ic svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 footer a.ic{display:inline-flex;align-items:center;gap:.4rem}
 footer a.ic svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.share{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid var(--line);color:var(--muted)}
+.share .up{margin-right:.4rem}
+.share .chip{display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;transition:all .25s}
+.share .chip:hover{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+.share .chip svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.share-note{color:var(--sage);min-height:1em;margin-left:.4rem}
+.share+.pn{margin-top:1.5rem}

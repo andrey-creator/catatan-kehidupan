@@ -36,7 +36,7 @@ export async function onRequestGet({ request, env, params }) {
     .on('meta[property="og:description"]', set(desc))
     .on('meta[property="og:type"]', set("article"))
     .on("head", { element(el) { el.append("\n  " + entryTags(row, base) + "\n", { html: true }); } })
-    .on("main#app", { element(el) { el.setInnerContent(articleHtml(row), { html: true }); } })
+    .on("main#app", { element(el) { el.setInnerContent(articleHtml(row, base), { html: true }); } })
     .transform(shell);
 
   const headers = new Headers(out.headers);

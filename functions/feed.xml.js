@@ -1,0 +1,47 @@
+// GET /feed.xml — RSS 2.0 untuk 30 tulisan terbaru yang terbit.
+import { baseUrl, entryUrl, excerpt, esc, SITE_NAME, AUTHOR } from "../lib/seo.js";
+
+const x = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const cdata = (s) => "<![CDATA[" + String(s).replace(/]]>/g, "]]]]><![CDATA[>") + "]]>";
+const rfc = (d) => new Date(`${d}T12:00:00Z`).toUTCString();
+const paras = (body) => String(body).split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, "<br>")}</p>`).join("");
+
+export async function onRequestGet({ request, env }) {
+  const base = baseUrl(env, request.url);
+  let rows = [];
+  try {
+    ({ results: rows } = await env.DB.prepare(
+      "SELECT id, date, tag, title, body, updated_at FROM entries WHERE published = 1 ORDER BY date DESC LIMIT 30"
+    ).all());
+  } catch { /* tetap sajikan feed kosong */ }
+
+  const items = rows.map((r) => {
+    const url = entryUrl(base, r.id);
+    return `    <item>
+      <title>${x(r.title)}</title>
+      <link>${x(url)}</link>
+      <guid isPermaLink="true">${x(url)}</guid>
+      <pubDate>${rfc(r.date)}</pubDate>
+      <category>${x(r.tag)}</category>
+      <dc:creator>${x(AUTHOR)}</dc:creator>
+      <description>${x(excerpt(r.body))}</description>
+      <content:encoded>${cdata(paras(r.body))}</content:encoded>
+    </item>`;
+  });
+
+  const newest = rows.length ? rfc(rows[0].date) : new Date().toUTCString();
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>${x(SITE_NAME)}</title>
+    <link>${x(base + "/")}</link>
+    <atom:link href="${x(base + "/feed.xml")}" rel="self" type="application/rss+xml"/>
+    <description>${x("Kepingan hidup dalam kalimat. Jurnal tulisan " + AUTHOR + ".")}</description>
+    <language>id</language>
+    <lastBuildDate>${newest}</lastBuildDate>
+${items.join("\n")}
+  </channel>
+</rss>
+`;
+  return new Response(xml, { headers: { "Content-Type": "application/rss+xml; charset=utf-8", "Cache-Control": "public, max-age=300" } });
+}

@@ -15,6 +15,7 @@ functions/                  backend (Pages Functions)
   index.js                 GET /               → beranda + canonical + Open Graph (URL absolut)
   tulisan/[id].js          GET /tulisan/:id    → satu tulisan: title, deskripsi, canonical, OG, JSON-LD, isi dirender di server
   tentang.js               GET /tentang        → halaman tentang (teks di lib/about.js)
+  feed.xml.js              GET /feed.xml       → RSS 30 tulisan terbaru
   sitemap.xml.js           GET /sitemap.xml
   robots.txt.js            GET /robots.txt     (memuat alamat sitemap)
 functions/api/

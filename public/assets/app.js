@@ -35,11 +35,25 @@ function read(id){
   var nx=items[i-1],pv=items[i+1];
   app.innerHTML='<article><a class="back up" href="/">← Semua tulisan</a>'+
    '<div class="up mt">'+fd(e.date)+' · <span class="tag">'+esc(e.tag)+'</span> · '+rt(e.body)+'</div>'+
-   '<h1>'+esc(e.title)+'</h1><div class="body">'+e.body.split(/\n{2,}/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>"}).join("")+'</div>'+
+   '<h1>'+esc(e.title)+'</h1><div class="body">'+e.body.split(/\n{2,}/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>"}).join("")+'</div>'+shareHtml(e.title,location.origin+"/tulisan/"+encodeURIComponent(e.id))+
       '<div class="pn">'+(pv?'<a href="/tulisan/'+encodeURIComponent(pv.id)+'"><span class="up">← Sebelumnya</span><br>'+esc(pv.title)+'</a>':'<span></span>')+
    (nx?'<a class="tr" href="/tulisan/'+encodeURIComponent(nx.id)+'"><span class="up">Berikutnya →</span><br>'+esc(nx.title)+'</a>':'')+'</div></article>';
-  window.scrollTo(0,0);
+  initShare();window.scrollTo(0,0);
 }
+function shareHtml(title,url){var wa="https://wa.me/?text="+encodeURIComponent(title+"\n"+url);return '<div class="share"><span class="up">Bagikan</span>'+'<button type="button" class="chip" data-copy><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg> Salin tautan</button>'+'<a class="chip" href="'+esc(wa)+'" target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/></svg> WhatsApp</a>'+'<button type="button" class="chip" data-share hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg> Lainnya</button>'+'<span class="up share-note" role="status" aria-live="polite"></span></div>'}
+function note(btn,msg){var n=btn.closest(".share").querySelector(".share-note");n.textContent=msg;clearTimeout(n._t);n._t=setTimeout(function(){n.textContent=""},2500)}
+function copyText(txt){
+  if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(txt);
+  return new Promise(function(ok,no){var t=document.createElement("textarea");t.value=txt;t.setAttribute("readonly","");t.style.position="fixed";t.style.opacity="0";document.body.appendChild(t);t.select();
+    try{document.execCommand("copy")?ok():no()}catch(e){no(e)}document.body.removeChild(t)})
+}
+function initShare(){if(navigator.share)app.querySelectorAll("[data-share]").forEach(function(b){b.hidden=false})}
+document.addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest("[data-copy],[data-share]");if(!b)return;
+  var h1=app.querySelector("article h1"),title=h1?h1.textContent:document.title,url=location.origin+location.pathname;
+  if(b.hasAttribute("data-copy")){copyText(url).then(function(){note(b,"Tautan disalin ✓")},function(){note(b,"Gagal menyalin. Salin dari bilah alamat.")})}
+  else{navigator.share({title:title,url:url}).catch(function(){})}
+});
 function go(path,replace){history[replace?"replaceState":"pushState"](null,"",path);route()}
 function route(){
   if(/^\/tentang\/?$/.test(location.pathname)){if(!app.querySelector(".about"))location.reload();return}
