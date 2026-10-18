@@ -15,7 +15,7 @@ function list(){
   document.title="Catatan Kehidupan — "+SITE.tagline.replace(/\.$/,"")+" — "+SITE.author;
   var h='<header class="hero shell"><div class="meta up"><span>Tulisan pribadi</span><span>Jurnal tulisan · '+new Date().getFullYear()+'</span></div>'+
    '<h1>Catatan<br>Kehidupan</h1><p class="note">'+esc(SITE.tagline)+'</p>'+
-   '<p class="lede">Pasangan dari Potret Kehidupan: kalau di sana hari-hari saya hadir sebagai gambar, di sini ia hadir sebagai kalimat. Klik sebuah tulisan untuk membacanya.</p></header>'+
+   '<p class="lede">Jurnal tulisan pribadi '+esc(SITE.author)+', pasangan dari Potret Kehidupan: kalau di sana hari-hari saya hadir sebagai gambar, di sini ia hadir sebagai kalimat. Klik sebuah tulisan untuk membacanya.</p></header>'+
    '<section class="shell"><div class="tools"><div class="chips">'+
    tags.map(function(t){return '<button class="chip" aria-pressed="'+(t===tagF)+'" data-tag="'+esc(t)+'">'+esc(t)+'</button>'}).join("")+
    '</div><input class="search" id="q" type="search" placeholder="Cari tulisan…" aria-label="Cari tulisan" value="'+esc(q)+'"></div>';
