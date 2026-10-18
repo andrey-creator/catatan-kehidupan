@@ -12,9 +12,9 @@ function list(){
   items.forEach(function(e){if(tags.indexOf(e.tag)<0)tags.push(e.tag)});
   var f=items.filter(function(e){
     return (tagF==="Semua"||e.tag===tagF)&&(!q||(e.title+" "+e.body).toLowerCase().indexOf(q)>-1)});
-  document.title="Catatan Kehidupan — Kepingan hidup dalam kata.";
+  document.title="Catatan Kehidupan — "+SITE.tagline.replace(/\.$/,"")+" — "+SITE.author;
   var h='<header class="hero shell"><div class="meta up"><span>Tulisan pribadi</span><span>Jurnal tulisan · '+new Date().getFullYear()+'</span></div>'+
-   '<h1>Catatan<br>Kehidupan</h1><p class="note">Kepingan hidup dalam kata.</p>'+
+   '<h1>Catatan<br>Kehidupan</h1><p class="note">'+esc(SITE.tagline)+'</p>'+
    '<p class="lede">Pasangan dari Potret Kehidupan: kalau di sana hari-hari saya hadir sebagai gambar, di sini ia hadir sebagai kalimat. Klik sebuah tulisan untuk membacanya.</p></header>'+
    '<section class="shell"><div class="tools"><div class="chips">'+
    tags.map(function(t){return '<button class="chip" aria-pressed="'+(t===tagF)+'" data-tag="'+esc(t)+'">'+esc(t)+'</button>'}).join("")+
@@ -57,6 +57,7 @@ document.addEventListener("click",function(e){
 });
 
 document.getElementById("yr").textContent=new Date().getFullYear();
+document.getElementById("au").textContent=SITE.author;
 var pl=document.getElementById("potret");
 if(SITE.potretUrl){pl.href=SITE.potretUrl}else{pl.hidden=true}
 if(!app.firstElementChild)app.innerHTML='<p class="shell empty">Memuat tulisan…</p>';
