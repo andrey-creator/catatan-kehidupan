@@ -25,15 +25,3 @@ functions/api/
 lib/util.js auth.js seo.js validasi tulisan, logika login/sesi, pembangun tag SEO
 db/schema.sql seed.sql     tabel D1 + 4 tulisan contoh (opsional)
 ```
-## Mengubah apa, di mana
-
-| Yang ingin diubah | Edit di | Efek setelah push |
-|---|---|---|
-| Isi/judul **tulisan** | `/admin` di situs (disimpan di database D1) | langsung, tanpa push |
-| Slogan, nama penulis, tautan Jurnal Foto | `public/assets/config.js` | setelah deploy selesai |
-| `<title>`, deskripsi, tag pratinjau tautan | `public/index.html` | setelah deploy; WhatsApp/Facebook/Google menyimpan cache pratinjau lama |
-| Tampilan | `public/assets/styles.css` | setelah deploy |
-
-Setelah `git push`, buka Cloudflare → Workers & Pages → proyek → **Deployments**. Harus muncul deployment baru dengan commit yang sama.
-Pengaturan yang dibutuhkan: Build output directory `public`, build command kosong, production branch `main`,
-binding D1 bernama `DB`, serta secret `ADMIN_PASSWORD` dan `SESSION_SECRET`.
