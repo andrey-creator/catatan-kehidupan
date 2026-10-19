@@ -100,7 +100,22 @@
     var tl = field("Kategori", tag); tl.appendChild(dl); two.appendChild(tl);
     two.appendChild(field("Status", st));
     f.appendChild(two);
+    var imp = el("input"); imp.type = "file";
+    imp.accept = ".txt,.md,.markdown,.docx,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    imp.onchange = function () {
+      var file = imp.files && imp.files[0];
+      if (!file) return;
+      window.ImportFile.read(file).then(function (r) {
+        if (r.body.length > 50000) throw new Error("Isi berkas melebihi 50.000 karakter (" + r.body.length + ").");
+        if (body.value.trim() && !confirm("Ganti isi tulisan yang sekarang dengan isi berkas ini?")) return;
+        body.value = r.body;
+        if (r.title && !title.value.trim()) title.value = r.title.slice(0, 120);
+        msg("Berkas diimpor. Periksa dulu, lalu klik Simpan.");
+      }).catch(function (x) { msg(x.message, true); })
+        .then(function () { imp.value = ""; });
+    };
     f.appendChild(field("Isi tulisan", body));
+    f.appendChild(field("Impor dari berkas (.txt, .md, .docx) — mengisi kolom di atas, belum tersimpan", imp));
     var row = el("div", "row");
     var save = el("button", "btn", "Simpan"); save.type = "submit";
     var cancel = el("button", "btn", "Batal"); cancel.type = "button";

@@ -97,3 +97,5 @@ footer a.ic svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:
 .share .chip svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .share-note{color:var(--sage);min-height:1em;margin-left:.4rem}
 .share+.pn{margin-top:1.5rem}
+input[type=file]{width:100%;padding:.5rem;border:1px dashed var(--line);background:var(--paper);color:var(--ink);font-size:.8rem}
+input[type=file]::file-selector-button{border:1px solid rgba(128,128,118,.5);background:transparent;color:inherit;padding:.45rem .9rem;margin-right:.8rem;font:inherit;font-size:.67rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer}
