@@ -54,7 +54,9 @@ document.addEventListener("click",function(e){
   if(b.hasAttribute("data-copy")){copyText(url).then(function(){note(b,"Tautan disalin ✓")},function(){note(b,"Gagal menyalin. Salin dari bilah alamat.")})}
   else{navigator.share({title:title,url:url}).catch(function(){})}
 });
-function go(path,replace){history[replace?"replaceState":"pushState"](null,"",path);route()}
+var navigated=false;
+function focusTop(){var h=app.querySelector("h1");if(h){h.setAttribute("tabindex","-1");h.focus({preventScroll:true})}}
+function go(path,replace){history[replace?"replaceState":"pushState"](null,"",path);navigated=true;route();if(!replace)window.scrollTo(0,0)}
 function route(){
   if(/^\/tentang\/?$/.test(location.pathname)){if(!app.querySelector(".about"))location.reload();return}
   var h=location.hash.match(/^#\/tulisan\/(.+)$/);
@@ -62,8 +64,9 @@ function route(){
   var m=location.pathname.match(/^\/tulisan\/([^\/]+)\/?$/);
   var id=null;if(m){try{id=decodeURIComponent(m[1])}catch(e){}}
   id?read(id):list();
+  if(navigated){navigated=false;focusTop()}
 }
-window.addEventListener("popstate",route);
+window.addEventListener("popstate",function(){navigated=true;route()});
 document.addEventListener("click",function(e){
   if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
   var a=e.target.closest&&e.target.closest("a[href]");

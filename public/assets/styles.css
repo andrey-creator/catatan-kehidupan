@@ -1,5 +1,5 @@
 :root{
-  --bone:#f1eee8;--paper:#faf9f6;--ink:#202521;--muted:#6c6f68;--line:rgba(32,37,33,.16);--sage:#7b8a78;--inv:#fff;
+  --bone:#f1eee8;--paper:#faf9f6;--ink:#202521;--muted:#64675f;--line:rgba(32,37,33,.16);--sage:#7b8a78;--inv:#fff;
   --pad:clamp(1.25rem,4vw,4.5rem);--w:1180px;--ease:cubic-bezier(.2,.75,.25,1);
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
