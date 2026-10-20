@@ -15,9 +15,30 @@ function linkify(raw){
     else{var t=m[3].match(/^(.*?)([.,;:!?)\]]*)$/);out+=a(t[1],t[1])+esc(t[2])}
     last=m.index+m[0].length}
   return out+esc(raw.slice(last))}
-function bodyHtml(b){return b.split(/\n{2,}/).map(function(p){var m=p.trim().match(PH);
-  if(m)return '<figure class="foto"><img src="/foto/'+m[1]+'" alt="'+esc(m[2])+'" loading="lazy">'+(m[2]?'<figcaption>'+esc(m[2])+'</figcaption>':'')+'</figure>';
-  return "<p>"+linkify(p).replace(/\n/g,"<br>")+"</p>"}).join("")}
+function inlineFormat(raw){
+  return linkify(raw).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,"$1<em>$2</em>")
+    .replace(/(^|[^_])_([^_\n]+)_(?!_)/g,"$1<em>$2</em>");
+}
+function bodyHtml(b){
+  var blocks=String(b).split(/\n{2,}/),out=[];
+  blocks.forEach(function(block){
+    var p=block.trim(); if(!p)return;
+    var m=p.match(PH);
+    if(m){out.push('<figure class="foto"><img src="/foto/'+m[1]+'" alt="'+esc(m[2])+'" loading="lazy">'+(m[2]?'<figcaption>'+esc(m[2])+'</figcaption>':'')+'</figure>');return}
+    if(/^###?\s+/.test(p)){var h=p.match(/^(#{2,3})\s+([\s\S]*)$/);if(h){var level=h[1].length+1;out.push("<h"+level+">"+inlineFormat(h[2])+"</h"+level+">");return}}
+    if(/^>\s?/.test(p)){out.push('<blockquote>'+p.split("\n").map(function(l){return inlineFormat(l.replace(/^>\s?/,""))}).join("<br>")+'</blockquote>');return}
+    var lines=p.split("\n");
+    if(lines.every(function(l){return /^\s*[-*+]\s+/.test(l)})){
+      out.push("<ul>"+lines.map(function(l){return "<li>"+inlineFormat(l.replace(/^\s*[-*+]\s+/,""))+"</li>"}).join("")+"</ul>");return;
+    }
+    if(lines.every(function(l){return /^\s*\d+[.)]\s+/.test(l)})){
+      out.push("<ol>"+lines.map(function(l){return "<li>"+inlineFormat(l.replace(/^\s*\d+[.)]\s+/,""))+"</li>"}).join("")+"</ol>");return;
+    }
+    out.push("<p>"+inlineFormat(p).replace(/\n/g,"<br>")+"</p>");
+  });
+  return out.join("");
+}
 function exc(b){var t=b.replace(PHA," ").replace(/\[([^\]\n]+)\]\(https?:\/\/[^\s)]+\)/g,"$1").replace(/\s+/g," ").trim();return t.length>150?t.slice(0,150).replace(/\s+\S*$/,"")+"…":t}
 var app=document.getElementById("app");
 

@@ -24,28 +24,6 @@
   function today() {
     return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   }
-  // ---- Draf otomatis (localStorage) ----
-  var DRAFT_PREFIX = "catatan:draft:", FIELDS = ["title", "date", "tag", "status", "body"];
-  var leaveForm = null; // diisi saat formulir terbuka; menyimpan draf terakhir lalu menghentikan simpan otomatis
-  function store(fn) { try { return fn(window.localStorage); } catch (x) { return null; } }
-  function draftKey(e) { return DRAFT_PREFIX + (e ? e.id : "new"); }
-  function readDraft(key) {
-    var raw = store(function (s) { return s.getItem(key); });
-    if (!raw) return null;
-    try { var d = JSON.parse(raw); return d && typeof d.body === "string" ? d : null; } catch (x) { return null; }
-  }
-  function dropDraft(key) { store(function (s) { s.removeItem(key); }); }
-  function listDrafts() {
-    var out = [];
-    store(function (s) {
-      for (var i = 0; i < s.length; i++) { var k = s.key(i); if (k && k.indexOf(DRAFT_PREFIX) === 0) out.push(k); }
-    });
-    return out;
-  }
-  function when(ts) {
-    try { return new Date(ts).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); }
-    catch (x) { return ""; }
-  }
   function fd(d) { var p = d.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
   function msg(text, err) {
     var m = el("div", "msg" + (err ? " err" : ""), text);
@@ -54,27 +32,10 @@
   }
 
   function showList(note) {
-    if (leaveForm) { leaveForm(); leaveForm = null; }
     app.replaceChildren();
     app.appendChild(el("p", "up", "Panel penulis"));
     app.appendChild(el("h1", null, "Tulisan"));
     if (note) msg(note);
-    var pend = listDrafts().map(function (k) {
-      var id = k.slice(DRAFT_PREFIX.length), d = readDraft(k);
-      var en = id === "new" ? null : entries.filter(function (x) { return x.id === id; })[0];
-      return d && (id === "new" || en) ? { d: d, en: en } : null;
-    }).filter(Boolean);
-    if (pend.length) {
-      var pb = el("div", "msg");
-      pb.appendChild(document.createTextNode("Ada draf yang belum disimpan: "));
-      pend.forEach(function (p) {
-        var b = el("button", "btn", (p.en ? "Lanjutkan “" + p.en.title : "Lanjutkan tulisan baru" + (p.d.title ? " “" + p.d.title : "")) + (p.en || p.d.title ? "”" : ""));
-        b.type = "button";
-        b.onclick = function () { showForm(p.en); };
-        pb.appendChild(b); pb.appendChild(document.createTextNode(" "));
-      });
-      app.appendChild(pb);
-    }
     var bar = el("div", "adm-bar");
     bar.appendChild(el("span", "up", entries.length + " tulisan"));
     var nb = el("button", "btn", "+ Tulisan baru");
@@ -143,6 +104,63 @@
     l.appendChild(input);
     return l;
   }
+
+  // WYSIWYG ringan: isi tetap disimpan sebagai Markdown agar tulisan lama kompatibel.
+  function mdEditorHtml(md) {
+    function inline(src) {
+      return esc(src).replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+        .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>');
+    }
+    return String(md || '').split(/\n{2,}/).map(function (block) {
+      var t = block.trim(); if (!t) return '';
+      var photo = t.match(/^\[\[foto:([A-Za-z0-9_-]{6,40})\|([^\]\n]{0,200})\]\]$/);
+      if (photo) return '<p><span class="wys-photo" contenteditable="false" data-marker="'+esc(t)+'">📷 '+esc(photo[2] || 'Foto')+' <small>(foto)</small></span></p>';
+      var h = t.match(/^#{2,3}\s+([\s\S]*)$/); if (h) return '<h'+(t.match(/^#+/)[0].length+1)+'>'+inline(h[1])+'</h'+(t.match(/^#+/)[0].length+1)+'>';
+      if (/^>\s?/.test(t)) return '<blockquote>'+t.split('\n').map(function(l){return inline(l.replace(/^>\s?/,''))}).join('<br>')+'</blockquote>';
+      var lines=t.split('\n');
+      if(lines.every(function(l){return /^\s*[-*+]\s+/.test(l)})) return '<ul>'+lines.map(function(l){return '<li>'+inline(l.replace(/^\s*[-*+]\s+/,''))+'</li>'}).join('')+'</ul>';
+      if(lines.every(function(l){return /^\s*\d+[.)]\s+/.test(l)})) return '<ol>'+lines.map(function(l){return '<li>'+inline(l.replace(/^\s*\d+[.)]\s+/,''))+'</li>'}).join('')+'</ol>';
+      return '<p>'+lines.map(inline).join('<br>')+'</p>';
+    }).join('');
+  }
+  function editorMarkdown(root) {
+    function inlineNode(node) {
+      if(node.nodeType===3) return node.nodeValue.replace(/\u00a0/g,' ');
+      if(node.nodeType!==1) return '';
+      var tag=node.tagName.toLowerCase();
+      if(node.classList.contains('wys-photo')) return node.getAttribute('data-marker') || '';
+      var inside=Array.prototype.map.call(node.childNodes,inlineNode).join('');
+      if(tag==='strong'||tag==='b') return '**'+inside+'**';
+      if(tag==='em'||tag==='i') return '*'+inside+'*';
+      if(tag==='a') { var href=node.getAttribute('href')||''; return /^https?:\/\//i.test(href) ? '['+inside+']('+href+')' : inside; }
+      if(tag==='br') return '\n';
+      return inside;
+    }
+    function block(node) {
+      if(node.nodeType===3) return node.nodeValue.trim() ? node.nodeValue : '';
+      if(node.nodeType!==1) return '';
+      var tag=node.tagName.toLowerCase();
+      if(tag==='div' && node.classList.contains('wys-photo')) return node.getAttribute('data-marker')||'';
+      if(/^h[2-4]$/.test(tag)) return (tag==='h2'?'## ':tag==='h3'?'### ':'#### ')+Array.prototype.map.call(node.childNodes,inlineNode).join('');
+      if(tag==='blockquote') return Array.prototype.map.call(node.childNodes,inlineNode).join('').split('\n').map(function(x){return '> '+x}).join('\n');
+      if(tag==='ul'||tag==='ol') return Array.prototype.map.call(node.children,function(li,i){return (tag==='ul'?'- ': (i+1)+'. ')+Array.prototype.map.call(li.childNodes,inlineNode).join('').trim()}).join('\n');
+      if(tag==='p'||tag==='div') {
+        if(node.querySelector('.wys-photo')) { var ph=node.querySelector('.wys-photo'); return ph.getAttribute('data-marker')||''; }
+        return Array.prototype.map.call(node.childNodes,inlineNode).join('').trim();
+      }
+      return Array.prototype.map.call(node.childNodes,inlineNode).join('');
+    }
+    return Array.prototype.map.call(root.childNodes,block).filter(function(x){return x!==''}).join('\n\n').replace(/\n{3,}/g,'\n\n').slice(0,50000);
+  }
+  function placeAtCursor(html) {
+    var sel=window.getSelection(); if(!sel || !sel.rangeCount) return false;
+    var range=sel.getRangeAt(0); if(!document.getElementById('journal-editor').contains(range.commonAncestorContainer)) return false;
+    range.deleteContents(); var frag=range.createContextualFragment(html); var last=frag.lastChild; range.insertNode(frag);
+    if(last){range.setStartAfter(last);range.collapse(true);sel.removeAllRanges();sel.addRange(range)} return true;
+  }
+
   function showForm(e) {
     app.replaceChildren();
     app.appendChild(el("p", "up", e ? "Edit tulisan" : "Tulisan baru"));
@@ -164,7 +182,9 @@
     });
     st.value = e && !e.published ? "0" : "1";
     var body = el("textarea"); body.required = true; body.maxLength = 50000; body.value = e ? e.body : "";
-    body.placeholder = "Pisahkan paragraf dengan baris kosong. Tautan: tempel alamat https://… atau tulis [teks](https://…).";
+    body.placeholder = "Isi jurnal"; body.hidden = true;
+    var visual = el("div", "wysiwyg"); visual.id = "journal-editor"; visual.contentEditable = "true"; visual.setAttribute("role", "textbox"); visual.setAttribute("aria-multiline", "true"); visual.setAttribute("aria-label", "Isi jurnal"); visual.innerHTML = mdEditorHtml(body.value);
+    visual.setAttribute("data-placeholder", "Mulai tulis jurnal Anda di sini…");
 
     f.appendChild(field("Judul", title));
     var two = el("div", "two");
@@ -180,13 +200,34 @@
       window.ImportFile.read(file).then(function (r) {
         if (r.body.length > 50000) throw new Error("Isi berkas melebihi 50.000 karakter (" + r.body.length + ").");
         if (body.value.trim() && !confirm("Ganti isi tulisan yang sekarang dengan isi berkas ini?")) return;
-        body.value = r.body;
+        body.value = r.body; visual.innerHTML = mdEditorHtml(body.value); drawThumbs();
         if (r.title && !title.value.trim()) title.value = r.title.slice(0, 120);
         msg("Berkas diimpor. Periksa dulu, lalu klik Simpan.");
       }).catch(function (x) { msg(x.message, true); })
         .then(function () { imp.value = ""; });
     };
-    f.appendChild(field("Isi tulisan", body));
+    var editor = el("div", "md-editor");
+    var toolbar = el("div", "md-toolbar"); toolbar.setAttribute("aria-label", "Pemformatan tulisan");
+    function tool(label, title, action) {
+      var b=el("button","btn md-tool",label); b.type="button"; b.title=title; b.onclick=function(){visual.focus();action();syncBody();}; toolbar.appendChild(b);
+    }
+    tool("H2", "Judul bagian", function(){document.execCommand("formatBlock",false,"h2")});
+    tool("B", "Tebal", function(){document.execCommand("bold",false,null)});
+    tool("I", "Miring", function(){document.execCommand("italic",false,null)});
+    tool("Kutipan", "Kutipan", function(){document.execCommand("formatBlock",false,"blockquote")});
+    tool("• Daftar", "Daftar berpoin", function(){document.execCommand("insertUnorderedList",false,null)});
+    tool("1. Daftar", "Daftar bernomor", function(){document.execCommand("insertOrderedList",false,null)});
+    tool("Tautan", "Sisipkan tautan", function(){var u=prompt("Masukkan alamat tautan (https://…):");if(u&&/^https?:\/\//i.test(u))document.execCommand("createLink",false,u);else if(u)msg("Tautan harus diawali http:// atau https://",true)});
+    tool("¶ Paragraf", "Paragraf biasa", function(){document.execCommand("formatBlock",false,"p")});
+    var help=el("details","md-help"); help.appendChild(el("summary",null,"Panduan format tulisan"));
+    var helpText=el("div","md-help-content"); helpText.innerHTML='<p>Gunakan tombol di atas untuk memformat tulisan secara visual. Isi disimpan sebagai Markdown agar tulisan lama tetap kompatibel.</p><p>Anda dapat menempel teks biasa, memilih teks lalu menekan Tebal/Miring, membuat judul, kutipan, daftar, dan tautan. Foto yang disisipkan akan tetap tersimpan sebagai bagian dari jurnal.</p>';
+    help.appendChild(helpText);
+    editor.appendChild(toolbar); editor.appendChild(help); editor.appendChild(visual); editor.appendChild(body);
+    f.appendChild(field("Isi tulisan", editor));
+    function syncBody(){body.value=editorMarkdown(visual); drawThumbs();}
+    visual.addEventListener("input",syncBody);
+    visual.addEventListener("paste",function(ev){ev.preventDefault();var txt=(ev.clipboardData||window.clipboardData).getData("text/plain");document.execCommand("insertText",false,txt);syncBody();});
+    visual.addEventListener("keydown",function(ev){if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="b"){ev.preventDefault();document.execCommand("bold",false,null)}else if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="i"){ev.preventDefault();document.execCommand("italic",false,null)}});
 
     var thumbs = el("div", "thumbs");
     function drawThumbs() {
@@ -201,7 +242,7 @@
       }
       thumbs.hidden = !n;
     }
-    body.addEventListener("input", drawThumbs);
+
     var pic = el("input"); pic.type = "file"; pic.multiple = true;
     pic.accept = "image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif";
     pic.onchange = function () {
@@ -213,87 +254,27 @@
         return p.then(function () {
           return uploadPhoto(file).then(function (r) {
             // Sisipkan di posisi kursor, sebagai paragraf sendiri.
-            var pos = body.selectionStart == null ? body.value.length : body.selectionStart;
-            var before = body.value.slice(0, pos).replace(/\s+$/, ""), after = body.value.slice(pos).replace(/^\s+/, "");
-            body.value = before + (before ? "\n\n" : "") + r.marker + (after ? "\n\n" : "") + after;
-            var np = (before ? before.length + 2 : 0) + r.marker.length + (after ? 2 : 0);
-            body.setSelectionRange(np, np);
-            done++;
+            visual.focus();
+            var markerHtml='<p><span class="wys-photo" contenteditable="false" data-marker="'+esc(r.marker)+'">📷 '+esc(r.caption || file.name)+' <small>(foto)</small></span></p><p><br></p>';
+            if(!placeAtCursor(markerHtml)){visual.insertAdjacentHTML("beforeend",markerHtml)}
+            syncBody(); done++;
           });
         });
       }, Promise.resolve()).then(function () {
-        msg(done + " foto ditambahkan. Keterangan = nama berkas; bisa diubah langsung di antara “|” dan “]]”.");
+        msg(done + " foto ditambahkan ke editor jurnal.");
       }).catch(function (x) { msg(x.message, true); })
         .then(function () { pic.value = ""; pic.disabled = false; drawThumbs(); });
     };
     f.appendChild(field("Sisipkan foto (JPG, PNG, WebP) — muncul di posisi kursor dengan keterangan sesuai nama berkas", pic));
     f.appendChild(thumbs);
-    drawThumbs();
+    syncBody();
     f.appendChild(field("Impor dari berkas (.txt, .md, .docx) — mengisi kolom di atas, belum tersimpan", imp));
     var row = el("div", "row");
     var save = el("button", "btn", "Simpan"); save.type = "submit";
     var cancel = el("button", "btn", "Batal"); cancel.type = "button";
+    cancel.onclick = function () { showList(); };
     row.appendChild(save); row.appendChild(cancel);
     f.appendChild(row);
-
-    // Simpan otomatis: setiap ±2 detik saat ada perubahan, juga saat tab disembunyikan/ditutup.
-    var key = draftKey(e), live = true, held = false, timer = null;
-    function snap() { return { title: title.value, date: date.value, tag: tag.value, status: st.value, body: body.value }; }
-    var base = snap();
-    function dirty() { var s = snap(); return FIELDS.some(function (k) { return s[k] !== base[k]; }); }
-    function persist() {
-      if (timer) { clearTimeout(timer); timer = null; }
-      if (!live || held) return;
-      if (!dirty()) { dropDraft(key); return; }
-      var d = snap(); d.ts = Date.now();
-      store(function (s) { s.setItem(key, JSON.stringify(d)); });
-    }
-    function touch() { if (live && !held && !timer) timer = setTimeout(persist, 2000); }
-    function leave(flush) {
-      if (flush) persist();
-      live = false;
-      if (timer) { clearTimeout(timer); timer = null; }
-      document.onvisibilitychange = null; window.onpagehide = null;
-    }
-    leaveForm = function () { leave(true); };
-    f.addEventListener("input", touch);
-    f.addEventListener("change", touch);
-    body.addEventListener("input", touch);
-    var flush = function () { if (document.hidden !== false) persist(); };
-    document.onvisibilitychange = flush; window.onpagehide = persist;
-    // Isi yang berubah lewat skrip (sisip foto, impor berkas) tidak memicu "input"; pantau juga.
-    var lastBody = body.value;
-    var watch = setInterval(function () {
-      if (!live) { clearInterval(watch); return; }
-      if (body.value !== lastBody) { lastBody = body.value; touch(); }
-    }, 1000);
-
-    var dr = readDraft(key);
-    if (dr && FIELDS.some(function (k) { return typeof dr[k] === "string" && dr[k] !== base[k]; })) {
-      held = true; // jangan timpa draf lama sebelum pengguna memilih
-      var bn = el("div", "msg");
-      bn.appendChild(document.createTextNode("Ada draf yang tersimpan otomatis (" + when(dr.ts) + "). "));
-      var rb = el("button", "btn", "Pulihkan"); rb.type = "button";
-      var xb = el("button", "btn", "Buang"); xb.type = "button";
-      rb.onclick = function () {
-        if (dirty() && !confirm("Isi formulir yang sekarang akan diganti dengan draf ini. Lanjutkan?")) return;
-        if (typeof dr.title === "string") title.value = dr.title;
-        if (typeof dr.date === "string" && dr.date) date.value = dr.date;
-        if (typeof dr.tag === "string") tag.value = dr.tag;
-        if (dr.status === "0" || dr.status === "1") st.value = dr.status;
-        body.value = dr.body; lastBody = body.value;
-        drawThumbs();
-        held = false; bn.remove(); touch();
-      };
-      xb.onclick = function () { dropDraft(key); held = false; bn.remove(); };
-      bn.appendChild(rb); bn.appendChild(document.createTextNode(" ")); bn.appendChild(xb);
-      f.insertBefore(bn, f.firstChild);
-    }
-    cancel.onclick = function () {
-      if (dirty() && !confirm("Buang perubahan yang belum disimpan?")) return;
-      leave(false); dropDraft(key); leaveForm = null;
-      showList();
-    };
 
     f.onsubmit = function (ev) {
       ev.preventDefault();
@@ -302,7 +283,7 @@
       var req = e
         ? api("/" + encodeURIComponent(e.id), { method: "PUT", body: JSON.stringify(data) })
         : api("", { method: "POST", body: JSON.stringify(data) });
-      req.then(function () { leave(false); dropDraft(key); leaveForm = null; return load("Tulisan disimpan."); })
+      req.then(function () { return load("Tulisan disimpan."); })
         .catch(function (x) { save.disabled = false; msg(x.message, true); });
     };
     app.appendChild(f);
@@ -318,7 +299,6 @@
   }
 
   function showLogin() {
-    if (leaveForm) { leaveForm(); leaveForm = null; }
     app.replaceChildren();
     app.appendChild(el("p", "up", "Panel penulis"));
     app.appendChild(el("h1", null, "Masuk"));
