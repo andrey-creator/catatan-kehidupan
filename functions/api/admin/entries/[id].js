@@ -1,5 +1,6 @@
 // GET / PUT / DELETE /api/admin/entries/:id
 import { json, validateEntry } from "../../../../lib/util.js";
+import { photoIds } from "../../../../lib/seo.js";
 
 export async function onRequestGet({ env, params }) {
   const row = await env.DB.prepare(
@@ -21,6 +22,16 @@ export async function onRequestPut({ request, env, params }) {
 }
 
 export async function onRequestDelete({ env, params }) {
+  const old = await env.DB.prepare("SELECT body FROM entries WHERE id = ?").bind(params.id).first();
   const r = await env.DB.prepare("DELETE FROM entries WHERE id = ?").bind(params.id).run();
+  if (old) {
+    // Bersihkan foto milik tulisan ini yang tidak dipakai tulisan lain (gagal pun tidak masalah).
+    for (const pid of new Set(photoIds(old.body))) {
+      try {
+        const used = await env.DB.prepare("SELECT 1 FROM entries WHERE body LIKE ?").bind(`%[[foto:${pid}|%`).first();
+        if (!used) await env.DB.prepare("DELETE FROM images WHERE id = ?").bind(pid).run();
+      } catch { /* abaikan */ }
+    }
+  }
   return r.meta.changes ? json({ ok: true }) : json({ error: "Tidak ditemukan." }, 404);
 }

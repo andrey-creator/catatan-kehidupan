@@ -1,10 +1,9 @@
 // GET /feed.xml — RSS 2.0 untuk 30 tulisan terbaru yang terbit.
-import { baseUrl, entryUrl, excerpt, esc, SITE_NAME, AUTHOR } from "../lib/seo.js";
+import { baseUrl, entryUrl, excerpt, bodyHtml, SITE_NAME, AUTHOR } from "../lib/seo.js";
 
 const x = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const cdata = (s) => "<![CDATA[" + String(s).replace(/]]>/g, "]]]]><![CDATA[>") + "]]>";
 const rfc = (d) => new Date(`${d}T12:00:00Z`).toUTCString();
-const paras = (body) => String(body).split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, "<br>")}</p>`).join("");
 
 export async function onRequestGet({ request, env }) {
   const base = baseUrl(env, request.url);
@@ -25,7 +24,7 @@ export async function onRequestGet({ request, env }) {
       <category>${x(r.tag)}</category>
       <dc:creator>${x(AUTHOR)}</dc:creator>
       <description>${x(excerpt(r.body))}</description>
-      <content:encoded>${cdata(paras(r.body))}</content:encoded>
+      <content:encoded>${cdata(bodyHtml(r.body, base))}</content:encoded>
     </item>`;
   });
 

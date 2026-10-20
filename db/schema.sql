@@ -16,3 +16,13 @@ CREATE TABLE IF NOT EXISTS login_fails (
   at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_login_fails_ip ON login_fails (ip, at);
+
+-- Foto yang diunggah lewat admin (dikecilkan jadi JPEG, disimpan base64). Aman dijalankan ulang.
+CREATE TABLE IF NOT EXISTS images (
+  id         TEXT PRIMARY KEY,
+  name       TEXT NOT NULL,
+  mime       TEXT NOT NULL,
+  size       INTEGER NOT NULL,
+  data       TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);

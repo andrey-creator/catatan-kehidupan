@@ -9,7 +9,8 @@ export async function onRequest({ request, env, next }) {
 
   if (!["GET", "HEAD"].includes(request.method)) {
     if (!sameOrigin(request)) return json({ error: "Asal permintaan ditolak." }, 403);
-    if (request.method !== "DELETE" && !isJson(request)) return json({ error: "Content-Type harus application/json." }, 415);
+    const upload = request.method === "POST" && new URL(request.url).pathname === "/api/admin/images";
+    if (!upload && request.method !== "DELETE" && !isJson(request)) return json({ error: "Content-Type harus application/json." }, 415);
   }
   return next();
 }

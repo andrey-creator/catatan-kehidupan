@@ -5,7 +5,7 @@ import { baseUrl, entryTags, excerpt, articleHtml, esc } from "../../lib/seo.js"
 function notFound() {
   const html = `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">` +
     `<meta name="robots" content="noindex"><title>Tulisan tidak ditemukan — Catatan Kehidupan</title><link rel="icon" href="/favicon.svg" type="image/svg+xml">` +
-    `<link rel="stylesheet" href="/assets/styles.css"></head><body><main class="shell nf"><p class="up">404</p><h1>Tidak<br>ditemukan</h1>` +
+    `<link rel="stylesheet" href="/assets/styles.css"><script src="/assets/theme.js"></script></head><body><main class="shell nf"><p class="up">404</p><h1>Tidak<br>ditemukan</h1>` +
     `<p class="lede"><a href="/">← Kembali ke tulisan</a></p></main></body></html>`;
   return new Response(html, { status: 404, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }

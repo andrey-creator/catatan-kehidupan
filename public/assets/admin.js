@@ -66,6 +66,39 @@
     });
   }
 
+  var MAX_PHOTO = 1000000, PHOTO_RE = /\[\[foto:([A-Za-z0-9_-]{6,40})\|([^\]\n]{0,200})\]\]/g;
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  // Kecilkan ke JPEG maks. 1800 px (sekaligus membuang data lokasi EXIF) hingga muat ≤ 1 MB.
+  function shrink(file) {
+    if (!window.createImageBitmap) return Promise.reject(new Error("Browser ini belum mendukung unggah foto."));
+    return createImageBitmap(file).then(function (bmp) {
+      var s = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+      var c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(bmp.width * s)); c.height = Math.max(1, Math.round(bmp.height * s));
+      var x = c.getContext("2d");
+      x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+      x.drawImage(bmp, 0, 0, c.width, c.height);
+      if (bmp.close) bmp.close();
+      function enc(q) {
+        return new Promise(function (ok) { c.toBlob(ok, "image/jpeg", q); }).then(function (b) {
+          if (!b) throw new Error("Gagal memproses “" + file.name + "”.");
+          if (b.size > MAX_PHOTO && q > 0.45) return enc(q - 0.1);
+          if (b.size > MAX_PHOTO) throw new Error("“" + file.name + "” terlalu besar.");
+          return b;
+        });
+      }
+      return enc(0.86);
+    }, function () { throw new Error("“" + file.name + "” bukan foto yang bisa dibaca (gunakan JPG, PNG, atau WebP)."); });
+  }
+  function uploadPhoto(file) {
+    return shrink(file).then(function (blob) {
+      return fetch("/api/admin/images", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "image/jpeg", "X-Filename": encodeURIComponent(file.name) }, body: blob
+      }).then(handle);
+    });
+  }
+
   function field(label, input) {
     var l = el("label", "up", label);
     l.appendChild(input);
@@ -92,7 +125,7 @@
     });
     st.value = e && !e.published ? "0" : "1";
     var body = el("textarea"); body.required = true; body.maxLength = 50000; body.value = e ? e.body : "";
-    body.placeholder = "Pisahkan paragraf dengan baris kosong.";
+    body.placeholder = "Pisahkan paragraf dengan baris kosong. Tautan: tempel alamat https://… atau tulis [teks](https://…).";
 
     f.appendChild(field("Judul", title));
     var two = el("div", "two");
@@ -115,6 +148,48 @@
         .then(function () { imp.value = ""; });
     };
     f.appendChild(field("Isi tulisan", body));
+
+    var thumbs = el("div", "thumbs");
+    function drawThumbs() {
+      thumbs.replaceChildren();
+      var m, n = 0; PHOTO_RE.lastIndex = 0;
+      while ((m = PHOTO_RE.exec(body.value))) {
+        n++;
+        var fig = el("figure");
+        var im = el("img"); im.src = "/foto/" + m[1]; im.alt = m[2]; im.loading = "lazy";
+        fig.appendChild(im); fig.appendChild(el("figcaption", null, m[2] || "(tanpa keterangan)"));
+        thumbs.appendChild(fig);
+      }
+      thumbs.hidden = !n;
+    }
+    body.addEventListener("input", drawThumbs);
+    var pic = el("input"); pic.type = "file"; pic.multiple = true;
+    pic.accept = "image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif";
+    pic.onchange = function () {
+      var files = Array.prototype.slice.call(pic.files || []);
+      if (!files.length) return;
+      pic.disabled = true;
+      var done = 0;
+      files.reduce(function (p, file) {
+        return p.then(function () {
+          return uploadPhoto(file).then(function (r) {
+            // Sisipkan di posisi kursor, sebagai paragraf sendiri.
+            var pos = body.selectionStart == null ? body.value.length : body.selectionStart;
+            var before = body.value.slice(0, pos).replace(/\s+$/, ""), after = body.value.slice(pos).replace(/^\s+/, "");
+            body.value = before + (before ? "\n\n" : "") + r.marker + (after ? "\n\n" : "") + after;
+            var np = (before ? before.length + 2 : 0) + r.marker.length + (after ? 2 : 0);
+            body.setSelectionRange(np, np);
+            done++;
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        msg(done + " foto ditambahkan. Keterangan = nama berkas; bisa diubah langsung di antara “|” dan “]]”.");
+      }).catch(function (x) { msg(x.message, true); })
+        .then(function () { pic.value = ""; pic.disabled = false; drawThumbs(); });
+    };
+    f.appendChild(field("Sisipkan foto (JPG, PNG, WebP) — muncul di posisi kursor dengan keterangan sesuai nama berkas", pic));
+    f.appendChild(thumbs);
+    drawThumbs();
     f.appendChild(field("Impor dari berkas (.txt, .md, .docx) — mengisi kolom di atas, belum tersimpan", imp));
     var row = el("div", "row");
     var save = el("button", "btn", "Simpan"); save.type = "submit";

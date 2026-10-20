@@ -4,7 +4,21 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;
 var BLN=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 function fd(d){var p=d.split("-");return +p[2]+" "+BLN[+p[1]-1]+" "+p[0]}
 function rt(b){return Math.max(1,Math.round(b.split(/\s+/).length/200))+" mnt baca"}
-function exc(b){var t=b.replace(/\n+/g," ");return t.length>150?t.slice(0,150).replace(/\s+\S*$/,"")+"…":t}
+var PH=/^\[\[foto:([A-Za-z0-9_-]{6,40})\|([^\]\n]{0,200})\]\]$/,PHA=/\[\[foto:[A-Za-z0-9_-]{6,40}\|[^\]\n]{0,200}\]\]/g;
+var LK=/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"']+)/g;
+function linkify(raw){
+  function a(u,t){return '<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer nofollow">'+esc(t)+'</a>'}
+  var out="",last=0,m;LK.lastIndex=0;
+  while((m=LK.exec(raw))){
+    out+=esc(raw.slice(last,m.index));
+    if(m[1])out+=a(m[2],m[1]);
+    else{var t=m[3].match(/^(.*?)([.,;:!?)\]]*)$/);out+=a(t[1],t[1])+esc(t[2])}
+    last=m.index+m[0].length}
+  return out+esc(raw.slice(last))}
+function bodyHtml(b){return b.split(/\n{2,}/).map(function(p){var m=p.trim().match(PH);
+  if(m)return '<figure class="foto"><img src="/foto/'+m[1]+'" alt="'+esc(m[2])+'" loading="lazy">'+(m[2]?'<figcaption>'+esc(m[2])+'</figcaption>':'')+'</figure>';
+  return "<p>"+linkify(p).replace(/\n/g,"<br>")+"</p>"}).join("")}
+function exc(b){var t=b.replace(PHA," ").replace(/\[([^\]\n]+)\]\(https?:\/\/[^\s)]+\)/g,"$1").replace(/\s+/g," ").trim();return t.length>150?t.slice(0,150).replace(/\s+\S*$/,"")+"…":t}
 var app=document.getElementById("app");
 
 function list(){
@@ -35,7 +49,7 @@ function read(id){
   var nx=items[i-1],pv=items[i+1];
   app.innerHTML='<article><a class="back up" href="/">← Semua tulisan</a>'+
    '<div class="up mt">'+fd(e.date)+' · <span class="tag">'+esc(e.tag)+'</span> · '+rt(e.body)+'</div>'+
-   '<h1>'+esc(e.title)+'</h1><div class="body">'+e.body.split(/\n{2,}/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>"}).join("")+'</div>'+shareHtml(e.title,location.origin+"/tulisan/"+encodeURIComponent(e.id))+
+   '<h1>'+esc(e.title)+'</h1><div class="body">'+bodyHtml(e.body)+'</div>'+shareHtml(e.title,location.origin+"/tulisan/"+encodeURIComponent(e.id))+
       '<div class="pn">'+(pv?'<a href="/tulisan/'+encodeURIComponent(pv.id)+'"><span class="up">← Sebelumnya</span><br>'+esc(pv.title)+'</a>':'<span></span>')+
    (nx?'<a class="tr" href="/tulisan/'+encodeURIComponent(nx.id)+'"><span class="up">Berikutnya →</span><br>'+esc(nx.title)+'</a>':'')+'</div></article>';
   initShare();window.scrollTo(0,0);

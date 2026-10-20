@@ -9,7 +9,7 @@ public/                    halaman statis (output Cloudflare Pages)
   og-image.png             gambar pratinjau 1200×630 untuk WhatsApp, Facebook, X, dll.
   index.html               situs publik
   admin.html               login + editor tulisan
-  assets/ app.js admin.js config.js styles.css
+  assets/ app.js admin.js config.js styles.css theme.js
   _headers 404.html favicon.svg favicon.ico favicon-48.png apple-touch-icon.png
 functions/                  backend (Pages Functions)
   index.js                 GET /               → beranda: daftar tulisan dirender di server + canonical + Open Graph
@@ -24,7 +24,9 @@ functions/api/
   login.js session.js logout.js
   admin/_middleware.js     penjaga: wajib sesi sah + anti-CSRF
   admin/entries/index.js   GET daftar, POST tulisan baru
-  admin/entries/[id].js    GET, PUT, DELETE satu tulisan
+  admin/entries/[id].js    GET, PUT, DELETE satu tulisan (DELETE juga membersihkan fotonya)
+  admin/images/index.js    POST /api/admin/images → unggah foto (JPEG hasil kecilkan di browser)
+functions/foto/[id].js     GET /foto/:id       → menyajikan foto yang diunggah (cache 1 tahun)
 lib/util.js auth.js seo.js validasi tulisan, logika login/sesi, pembangun tag SEO
 db/schema.sql seed.sql     tabel D1 + 4 tulisan contoh (opsional)
 ```
@@ -34,6 +36,24 @@ db/schema.sql seed.sql     tabel D1 + 4 tulisan contoh (opsional)
 - **SITE_URL** (Settings → Variables and Secrets): isi dengan alamat utama situs, mis. `https://nama-situs.pages.dev`
   (tanpa garis miring di akhir). Dipakai untuk canonical, sitemap, RSS, dan gambar pratinjau.
 - **ADMIN_PASSWORD** (min. 12 karakter) dan **SESSION_SECRET** (min. 32 karakter): wajib sebagai *secret*.
+
+## Foto di tulisan
+
+Di editor admin, pakai "Sisipkan foto": foto dikecilkan di browser (maks. 1800 px, ≤ 1 MB, data lokasi EXIF terbuang), disimpan di tabel D1 `images`,
+lalu penanda `[[foto:ID|keterangan]]` muncul di isi tulisan pada posisi kursor. Keterangan di bawah foto otomatis = nama berkas
+(tanpa ekstensi, `_` jadi spasi); ubah teks setelah `|` bila ingin keterangan lain, atau hapus penanda untuk membuang foto dari tulisan.
+Tabel `images` dibuat otomatis saat unggah pertama; atau jalankan ulang `db/schema.sql`.
+
+## Tema
+
+Tombol "Tema" di navigasi membuat pembaca bisa memilih: Otomatis (mengikuti terang/gelap perangkat), Kertas, Sepia, Hutan, Laut, Senja, Malam, dan Tinta.
+Pilihan disimpan di browser masing-masing pembaca. Warna tiap tema ada di `public/assets/styles.css` (blok "Tema"); daftar nama di `public/assets/theme.js`.
+Untuk menambah tema: tambahkan satu baris warna di CSS (selektor `:root[data-theme="nama"],.sw[data-t="nama"]`) dan satu entri `["nama","Label"]` di `theme.js`.
+
+## Tautan di tulisan
+
+Alamat `https://…` yang ditempel di isi tulisan otomatis menjadi tautan yang bisa diklik (terbuka di tab baru). Untuk teks tautan sendiri, tulis `[teks](https://…)`.
+Hanya `http://` dan `https://` yang dikenali.
 
 ## Cadangan tulisan
 
