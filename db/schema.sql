@@ -6,7 +6,11 @@ CREATE TABLE IF NOT EXISTS entries (
   body       TEXT NOT NULL,
   published  INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  -- Versi English (opsional; kosong = belum diterjemahkan). Pada database lama, kolom ini dibuat otomatis oleh aplikasi.
+  title_en   TEXT NOT NULL DEFAULT '',
+  body_en    TEXT NOT NULL DEFAULT '',
+  tag_en     TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_entries_pub_date ON entries (published, date DESC);
 

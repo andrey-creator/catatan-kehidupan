@@ -268,3 +268,17 @@ nav.rd-hide:focus-within{transform:none}
 /* mode membaca santai: hormati preferensi gerak berkurang */
 @media(prefers-reduced-motion:reduce){nav,.rd-hud,.rd-sw i,.rd-sw i::after{transition:none}html{scroll-behavior:auto}}
 @media print{nav,.rd-bar,.rd-hud,.rd-toast,.share,.pn,footer{display:none!important}.body{font-size:12pt;color:#000}}
+<<<<<<< HEAD
+=======
+
+/* ---------- Dua bahasa (lihat assets/i18n.js) ---------- */
+.i18n-wait #app{visibility:hidden}
+.lang-sw{display:inline-flex;border:1px solid var(--line)}
+.links .lang-sw button{padding:.15rem .5rem;border:0;border-right:1px solid var(--line);background:none;color:var(--muted);font-size:.67rem;letter-spacing:.12em;line-height:1.4}
+.links .lang-sw button:last-child{border-right:0}
+.links .lang-sw button:hover{color:var(--ink)}
+.links .lang-sw button[aria-pressed="true"]{background:var(--ink);color:var(--inv)}
+.lang-badge{display:inline-block;margin-left:.3rem;padding:0 .35rem;border:1px solid var(--line);font-size:.6rem;letter-spacing:.1em;color:var(--muted)}
+.lang-note{margin:0 0 1.6rem;padding:.7rem .9rem;border-left:3px solid var(--sage);background:var(--paper);color:var(--muted);font-size:.9rem;line-height:1.5}
+.lang-tabs{margin-bottom:.2rem}
+>>>>>>> 11126f3 (ideng)

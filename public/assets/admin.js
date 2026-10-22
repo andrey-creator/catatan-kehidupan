@@ -49,7 +49,7 @@
       var mid = el("div");
       mid.appendChild(el("h2", null, e.title));
       var sm = el("small", "up");
-      sm.appendChild(document.createTextNode(e.tag + " · "));
+      sm.appendChild(document.createTextNode(e.tag + (e.title_en && e.body_en ? " · ID + EN" : " · ID saja") + " · "));
       sm.appendChild(el("span", "st" + (e.published ? "" : " draft"), e.published ? "Terbit" : "Draf"));
       mid.appendChild(sm);
       row.appendChild(mid);
@@ -233,14 +233,20 @@
     app.appendChild(el("p", "up", e ? "Edit tulisan" : "Tulisan baru"));
     app.appendChild(el("h1", null, e ? e.title : "Tulis sesuatu"));
     var f = el("form", "frm");
-    var title = el("input"); title.type = "text"; title.required = true; title.maxLength = 120; title.value = e ? e.title : "";
+    // Dua versi isi: Indonesia (wajib) dan English (opsional). Satu editor dipakai bergantian; isi tiap bahasa disimpan di S.
+    var S = {
+      id: { title: e ? e.title : "", tag: e ? e.tag : "Harian", body: e ? e.body : "" },
+      en: { title: e ? e.title_en || "" : "", tag: e ? e.tag_en || "" : "", body: e ? e.body_en || "" : "" }
+    };
+    var cur = "id";
+    var title = el("input"); title.type = "text"; title.required = true; title.maxLength = 120; title.value = S.id.title;
     var date = el("input"); date.type = "date"; date.required = true; date.value = e ? e.date : today();
-    var tag = el("input"); tag.type = "text"; tag.required = true; tag.maxLength = 30; tag.value = e ? e.tag : "Harian";
+    var tag = el("input"); tag.type = "text"; tag.required = true; tag.maxLength = 30; tag.value = S.id.tag;
     tag.setAttribute("list", "tags");
     var dl = el("datalist"); dl.id = "tags";
     var seen = {};
-    ["Harian", "Perjalanan", "Refleksi", "Catatan"].concat(entries.map(function (x) { return x.tag; })).forEach(function (t) {
-      if (seen[t]) return; seen[t] = 1;
+    ["Harian", "Perjalanan", "Refleksi", "Catatan"].concat(entries.map(function (x) { return x.tag; }), entries.map(function (x) { return x.tag_en; })).forEach(function (t) {
+      if (!t || seen[t]) return; seen[t] = 1;
       var o = el("option"); o.value = t; dl.appendChild(o);
     });
     var st = el("select");
@@ -248,11 +254,48 @@
       var o = el("option", null, p[1]); o.value = p[0]; st.appendChild(o);
     });
     st.value = e && !e.published ? "0" : "1";
-    var body = el("textarea"); body.maxLength = 50000; body.value = e ? e.body : "";
+    var body = el("textarea"); body.maxLength = 50000; body.value = S.id.body;
     body.placeholder = "Isi jurnal"; body.hidden = true;
     var visual = el("div", "wysiwyg"); visual.id = "journal-editor"; visual.contentEditable = "true"; visual.setAttribute("role", "textbox"); visual.setAttribute("aria-multiline", "true"); visual.setAttribute("aria-label", "Isi jurnal"); visual.innerHTML = mdEditorHtml(body.value) || "<p><br></p>";
     visual.setAttribute("data-placeholder", "Mulai tulis jurnal Anda di sini…");
 
+    var tabs = el("div", "chips lang-tabs"); tabs.setAttribute("role", "group"); tabs.setAttribute("aria-label", "Bahasa tulisan");
+    var tabBtn = {};
+    [["id", "Indonesia"], ["en", "English"]].forEach(function (p) {
+      var b = el("button", "chip", p[1]); b.type = "button"; b.setAttribute("lang", p[0]);
+      b.onclick = function () { showLang(p[0]); };
+      tabBtn[p[0]] = b; tabs.appendChild(b);
+    });
+    f.appendChild(tabs);
+    var enHint = el("div", "md-help"); enHint.hidden = true;
+    enHint.appendChild(el("p", null, "Versi English bersifat opsional. Kosongkan judul dan isi jika belum ada terjemahan: pembaca yang memilih English akan melihat versi Indonesia. Kategori English boleh dikosongkan (memakai kategori Indonesia)."));
+    var copyId = el("button", "btn md-tool", "Salin isi dari versi Indonesia"); copyId.type = "button";
+    copyId.onclick = function () {
+      if ((title.value.trim() || body.value.trim()) && !confirm("Ganti judul dan isi English dengan salinan dari versi Indonesia?")) return;
+      title.value = S.id.title; body.value = S.id.body; visual.innerHTML = mdEditorHtml(body.value) || "<p><br></p>"; syncBody();
+    };
+    enHint.appendChild(copyId);
+    f.appendChild(enHint);
+    function filled(l) { var v = l === cur ? { title: title.value, body: body.value } : S[l]; return !!(v.title.trim() && v.body.trim()); }
+    function updateTabs() {
+      Object.keys(tabBtn).forEach(function (l) {
+        tabBtn[l].setAttribute("aria-pressed", String(l === cur));
+        tabBtn[l].textContent = (l === "id" ? "Indonesia" : "English") + (filled(l) ? " ✓" : "");
+      });
+    }
+    function stash() { S[cur] = { title: title.value, tag: tag.value, body: editorMarkdown(visual) }; }
+    function showLang(l) {
+      if (l === cur) return;
+      stash(); cur = l;
+      title.value = S[l].title; tag.value = S[l].tag; body.value = S[l].body;
+      title.required = tag.required = (l === "id");
+      title.placeholder = l === "en" ? "English title (optional)" : ""; tag.placeholder = l === "en" ? "(sama dengan Indonesia)" : "";
+      visual.setAttribute("data-placeholder", l === "en" ? "Write the English version here (optional)…" : "Mulai tulis jurnal Anda di sini…");
+      visual.setAttribute("lang", l);
+      visual.innerHTML = mdEditorHtml(body.value) || "<p><br></p>";
+      enHint.hidden = l !== "en"; syncBody(); title.focus();
+    }
+    title.addEventListener("input", function () { updateTabs(); });
     f.appendChild(field("Judul", title));
     var two = el("div", "two");
     two.appendChild(field("Tanggal", date));
@@ -399,7 +442,7 @@
     help.appendChild(helpText);
     editor.appendChild(toolbar); editor.appendChild(help); editor.appendChild(visual); editor.appendChild(body);
     f.appendChild(group("Isi tulisan", editor));
-    function syncBody(){body.value=editorMarkdown(visual); visual.classList.toggle("blank",!body.value.trim()); drawThumbs();}
+    function syncBody(){body.value=editorMarkdown(visual); visual.classList.toggle("blank",!body.value.trim()); drawThumbs(); updateTabs();}
     visual.addEventListener("input",function(){syncBody();saveRange();});
     ["keyup","mouseup","touchend","blur"].forEach(function(n){visual.addEventListener(n,saveRange)});
     visual.addEventListener("paste",function(ev){ev.preventDefault();var txt=(ev.clipboardData||window.clipboardData).getData("text/plain");exec("insertText",txt);syncBody();});
@@ -457,9 +500,15 @@
     f.onsubmit = function (ev) {
       ev.preventDefault();
       syncBody();
-      if (!body.value.trim()) { msg("Isi tulisan tidak boleh kosong.", true); visual.focus(); return; }
+      stash();
+      if (!S.id.title.trim() || !S.id.tag.trim()) { showLang("id"); msg("Judul dan kategori (Indonesia) wajib diisi.", true); title.focus(); return; }
+      if (!S.id.body.trim()) { showLang("id"); msg("Isi tulisan (Indonesia) tidak boleh kosong.", true); visual.focus(); return; }
+      if (!!S.en.title.trim() !== !!S.en.body.trim()) { showLang("en"); msg("Versi English harus punya judul dan isi, atau kosongkan keduanya.", true); return; }
       save.disabled = true;
-      var data = { title: title.value, date: date.value, tag: tag.value, body: body.value, published: +st.value };
+      var data = {
+        title: S.id.title, date: date.value, tag: S.id.tag, body: S.id.body, published: +st.value,
+        title_en: S.en.title, tag_en: S.en.tag, body_en: S.en.body
+      };
       var req = e
         ? api("/" + encodeURIComponent(e.id), { method: "PUT", body: JSON.stringify(data) })
         : api("", { method: "POST", body: JSON.stringify(data) });

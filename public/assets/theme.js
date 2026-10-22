@@ -3,6 +3,9 @@
 (function () {
   var KEY = "tema-catatan";
   var T = [["otomatis", "Otomatis"], ["kertas", "Kertas"], ["sepia", "Sepia"], ["hutan", "Hutan"], ["laut", "Laut"], ["senja", "Senja"], ["malam", "Malam"], ["tinta", "Tinta"]];
+  /* Label tampil mengikuti bahasa (assets/i18n.js); daftar T di atas hanya memuat id dan label bawaan. */
+  function lab(t) { return window.I18N ? I18N.tt("th_" + t[0]) : t[1]; }
+  function tr(k, d) { return window.I18N ? I18N.tt(k) : d; }
   var root = document.documentElement;
 
   function valid(v) { return T.some(function (t) { return t[0] === v; }); }
@@ -33,18 +36,19 @@
     var wrap = document.createElement("div"); wrap.className = "tema";
     var btn = document.createElement("button");
     btn.type = "button"; btn.className = "tema-btn"; btn.setAttribute("aria-haspopup", "true"); btn.setAttribute("aria-expanded", "false");
-    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-.9.7-1.7 1.7-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r=".8"/><circle cx="10" cy="7.5" r=".8"/><circle cx="14.5" cy="7.5" r=".8"/></svg>Tema';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-.9.7-1.7 1.7-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r=".8"/><circle cx="10" cy="7.5" r=".8"/><circle cx="14.5" cy="7.5" r=".8"/></svg>';
+    var btnLab = document.createElement("span"); btnLab.textContent = tr("theme", "Tema"); btn.appendChild(btnLab);
     wrap.appendChild(btn);
     host.appendChild(wrap);
 
     var panel = document.createElement("div");
-    panel.className = "tema-panel"; panel.hidden = true; panel.setAttribute("role", "group"); panel.setAttribute("aria-label", "Pilih tema");
+    panel.className = "tema-panel"; panel.hidden = true; panel.setAttribute("role", "group"); panel.setAttribute("aria-label", tr("theme_pick", "Pilih tema"));
     var items = T.map(function (t) {
       var b = document.createElement("button");
       b.type = "button"; b.dataset.t = t[0]; b.setAttribute("aria-pressed", String(t[0] === cur));
       var sw = document.createElement("span"); sw.className = "sw"; sw.dataset.t = t[0]; sw.setAttribute("aria-hidden", "true");
       sw.appendChild(document.createElement("i"));
-      b.appendChild(sw); b.appendChild(document.createTextNode(t[1]));
+      var lt = document.createElement("span"); lt.textContent = lab(t); b.appendChild(sw); b.appendChild(lt); b._lab = lt; b._t = t;
       b.onclick = function () {
         cur = t[0]; save(cur); apply(cur);
         items.forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.t === cur)); });
@@ -53,6 +57,11 @@
       return b;
     });
     document.body.appendChild(panel);
+    document.addEventListener("langchange", function () {
+      btnLab.textContent = tr("theme", "Tema");
+      panel.setAttribute("aria-label", tr("theme_pick", "Pilih tema"));
+      items.forEach(function (b) { b._lab.textContent = lab(b._t); });
+    });
 
     function open() {
       panel.style.top = Math.round(btn.getBoundingClientRect().bottom + 8) + "px";

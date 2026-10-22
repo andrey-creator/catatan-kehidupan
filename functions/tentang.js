@@ -1,6 +1,7 @@
 // GET /tentang — halaman tentang, dirender di server dengan title, deskripsi, canonical, OG, dan JSON-LD.
-import { baseUrl, aboutTags, aboutHtml } from "../lib/seo.js";
-import { ABOUT_TITLE, ABOUT_DESC, ABOUT_PARAGRAPHS } from "../lib/about.js";
+// Tambahkan ?lang=en untuk versi English.
+import { baseUrl, aboutTags, aboutHtml, pageLang, langRewrites } from "../lib/seo.js";
+import { ABOUT } from "../lib/about.js";
 
 const POTRET_URL = "https://potret-kehidupan.pages.dev/";
 
@@ -9,17 +10,19 @@ export async function onRequestGet({ request, env }) {
   const shell = await env.ASSETS.fetch(new Request(origin + "/", { headers: request.headers }));
   if (!shell.ok) return shell;
 
+  const lang = pageLang(request.url);
+  const about = ABOUT[lang];
   const base = baseUrl(env, request.url);
-  const title = `${ABOUT_TITLE} — Catatan Kehidupan`;
+  const title = `${about.title} — Catatan Kehidupan`;
   const set = (v) => ({ element(el) { el.setAttribute("content", v); } });
 
-  const out = new HTMLRewriter()
+  const out = langRewrites(new HTMLRewriter(), lang)
     .on("title", { element(el) { el.setInnerContent(title); } })
-    .on('meta[name="description"]', set(ABOUT_DESC))
-    .on('meta[property="og:title"]', set(`${ABOUT_TITLE} — Catatan Kehidupan`))
-    .on('meta[property="og:description"]', set(ABOUT_DESC))
-    .on("head", { element(el) { el.append("\n  " + aboutTags(base) + "\n", { html: true }); } })
-    .on("main#app", { element(el) { el.setInnerContent(aboutHtml(ABOUT_PARAGRAPHS, POTRET_URL), { html: true }); } })
+    .on('meta[name="description"]', set(about.desc))
+    .on('meta[property="og:title"]', set(title))
+    .on('meta[property="og:description"]', set(about.desc))
+    .on("head", { element(el) { el.append("\n  " + aboutTags(base, lang, about) + "\n", { html: true }); } })
+    .on("main#app", { element(el) { el.setInnerContent(aboutHtml(about, POTRET_URL, lang), { html: true }); } })
     .transform(shell);
 
   const headers = new Headers(out.headers);
