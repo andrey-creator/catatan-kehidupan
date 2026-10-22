@@ -108,10 +108,7 @@ function route(keep){
   var id=null;if(m){try{id=decodeURIComponent(m[1])}catch(e){}}
   id?read(id,keep===true):list();
   if(navigated){navigated=false;focusTop()}
-<<<<<<< HEAD
-=======
   document.documentElement.classList.remove("i18n-wait");
->>>>>>> 11126f3 (ideng)
   if(window.readerSync)readerSync();
 }
 window.addEventListener("popstate",function(){navigated=true;route()});

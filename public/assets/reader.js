@@ -32,10 +32,7 @@
     try { localStorage.setItem(POS, JSON.stringify(m)); } catch (e) { /* abaikan */ }
   }
 
-<<<<<<< HEAD
-=======
   var tt = function (k, v) { return window.I18N ? I18N.tt(k, v) : k; };
->>>>>>> 11126f3 (ideng)
   var nav, btn, panel, bar, fill, hud, left, toTop, toast, lastY = 0, ticking = false, words = 0, lastSave = 0, panelOpen = false;
   var lbOpener = null;
 
@@ -66,11 +63,7 @@
     bar.classList.add("on");
     fill.style.transform = "scaleX(" + p.toFixed(4) + ")";
     var mins = Math.ceil(words * (1 - p) / WPM);
-<<<<<<< HEAD
-    left.textContent = p >= 0.985 ? "Selesai ✓" : (mins <= 1 ? "kurang dari 1 mnt lagi" : mins + " mnt lagi");
-=======
     left.textContent = p >= 0.985 ? tt("rd_done") : (mins <= 1 ? tt("rd_left_lt1") : tt("rd_left", { n: mins }));
->>>>>>> 11126f3 (ideng)
     hud.classList.toggle("on", y > 500);
     if (y > 200 && !toast.hidden) hideToast();
 
@@ -117,16 +110,6 @@
   }
   function buildPanel() {
     panel = document.createElement("div");
-<<<<<<< HEAD
-    panel.className = "rd-panel"; panel.hidden = true; panel.setAttribute("role", "group"); panel.setAttribute("aria-label", "Pengaturan membaca");
-    panel.appendChild(seg("fs", "Ukuran huruf", [[1, "A", "Sangat kecil"], [2, "A", "Kecil"], [3, "A", "Sedang"], [4, "A", "Besar"], [5, "A", "Sangat besar"]], "fs"));
-    panel.appendChild(seg("ff", "Jenis huruf", [["serif", "Serif"], ["sans", "Sans"]], "ff"));
-    panel.appendChild(seg("lh", "Jarak baris", [["rapat", "Rapat"], ["normal", "Normal"], ["lega", "Lega"]]));
-    panel.appendChild(seg("wd", "Lebar teks", [["sempit", "Sempit"], ["sedang", "Sedang"], ["lebar", "Lebar"]]));
-    panel.appendChild(sw("dc", "Huruf awal besar"));
-    panel.appendChild(sw("fm", "Sembunyikan menu saat menggulir"));
-    var rs = document.createElement("button"); rs.type = "button"; rs.className = "rd-reset"; rs.textContent = "Kembalikan ke bawaan";
-=======
     panel.className = "rd-panel"; panel.hidden = true; panel.setAttribute("role", "group"); panel.setAttribute("aria-label", tt("rd_panel"));
     panel.appendChild(seg("fs", tt("rd_size"), [[1, "A", tt("rd_s1")], [2, "A", tt("rd_s2")], [3, "A", tt("rd_s3")], [4, "A", tt("rd_s4")], [5, "A", tt("rd_s5")]], "fs"));
     panel.appendChild(seg("ff", tt("rd_font"), [["serif", "Serif"], ["sans", "Sans"]], "ff"));
@@ -135,7 +118,6 @@
     panel.appendChild(sw("dc", tt("rd_dc")));
     panel.appendChild(sw("fm", tt("rd_fm")));
     var rs = document.createElement("button"); rs.type = "button"; rs.className = "rd-reset"; rs.textContent = tt("rd_reset");
->>>>>>> 11126f3 (ideng)
     rs.onclick = function () {
       S = JSON.parse(JSON.stringify(DEF)); save(); apply();
       var was = !panel.hidden; panel.parentNode.removeChild(panel); buildPanel(); if (was) openPanel();
@@ -160,12 +142,8 @@
     if (!isEntry() || location.hash || window.pageYOffset > 50) return;
     var s = readPos()[location.pathname];
     if (!s || s.p < 0.05 || s.p > 0.95) return;
-<<<<<<< HEAD
-    toast.querySelector("span").textContent = "Lanjutkan dari " + Math.round(s.p * 100) + "%?";
-=======
     toast._pct = Math.round(s.p * 100);
     toast.querySelector("span").textContent = tt("rd_resume", { p: toast._pct });
->>>>>>> 11126f3 (ideng)
     toast.hidden = false;
     toast._p = s.p;
     clearTimeout(toast._t); toast._t = setTimeout(hideToast, 12000);
@@ -174,11 +152,7 @@
   /* ---------- pembesar foto ---------- */
   function openLightbox(img) {
     var fig = img.closest("figure"), cap = fig && fig.querySelector("figcaption");
-<<<<<<< HEAD
-    var o = document.createElement("button"); o.type = "button"; o.className = "rd-lb"; o.setAttribute("aria-label", "Tutup foto");
-=======
     var o = document.createElement("button"); o.type = "button"; o.className = "rd-lb"; o.setAttribute("aria-label", tt("rd_close_photo"));
->>>>>>> 11126f3 (ideng)
     var im = document.createElement("img"); im.src = img.currentSrc || img.src; im.alt = img.alt || "";
     o.appendChild(im);
     if (cap) { var c = document.createElement("span"); c.textContent = cap.textContent; o.appendChild(c); }
@@ -199,11 +173,7 @@
 
     btn = document.createElement("button"); btn.type = "button"; btn.className = "rd-btn"; btn.hidden = true;
     btn.setAttribute("aria-haspopup", "true"); btn.setAttribute("aria-expanded", "false");
-<<<<<<< HEAD
-    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18l5-12 5 12M5 13h6M15 18l3.5-8 3.5 8M16.3 15.5h4.4"/></svg>Baca';
-=======
     btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18l5-12 5 12M5 13h6M15 18l3.5-8 3.5 8M16.3 15.5h4.4"/></svg><span class="rd-lab"></span>';
->>>>>>> 11126f3 (ideng)
     host.insertBefore(btn, host.querySelector(".tema"));
     buildPanel();
 
@@ -212,21 +182,13 @@
 
     hud = document.createElement("div"); hud.className = "rd-hud";
     left = document.createElement("span"); left.className = "up"; hud.appendChild(left);
-<<<<<<< HEAD
-    toTop = document.createElement("button"); toTop.type = "button"; toTop.setAttribute("aria-label", "Kembali ke atas");
-=======
     toTop = document.createElement("button"); toTop.type = "button"; toTop.setAttribute("aria-label", tt("rd_top"));
->>>>>>> 11126f3 (ideng)
     toTop.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
     toTop.onclick = function () { window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); };
     hud.appendChild(toTop); document.body.appendChild(hud);
 
     toast = document.createElement("div"); toast.className = "rd-toast"; toast.hidden = true; toast.setAttribute("role", "status");
-<<<<<<< HEAD
-    toast.innerHTML = '<span></span><button type="button" data-go>Lanjutkan</button><button type="button" data-new>Dari awal</button>';
-=======
     toast.innerHTML = '<span></span><button type="button" data-go></button><button type="button" data-new></button>';
->>>>>>> 11126f3 (ideng)
     toast.querySelector("[data-go]").onclick = function () {
       var g = geom(); if (g) window.scrollTo({ top: g.top + toast._p * g.span, behavior: "auto" }); hideToast();
     };
@@ -235,8 +197,6 @@
     };
     document.body.appendChild(toast);
 
-<<<<<<< HEAD
-=======
     /* teks yang dibuat sekali di sini ikut berganti saat bahasa diganti */
     function labels() {
       btn.querySelector(".rd-lab").textContent = tt("rd_btn");
@@ -251,7 +211,6 @@
       labels(); update();
     });
 
->>>>>>> 11126f3 (ideng)
     btn.onclick = function () { panel.hidden ? openPanel() : closePanel(); };
     document.addEventListener("click", function (e) {
       if (panel && !panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) closePanel();
