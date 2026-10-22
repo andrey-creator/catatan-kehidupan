@@ -100,6 +100,7 @@ function route(){
   var id=null;if(m){try{id=decodeURIComponent(m[1])}catch(e){}}
   id?read(id):list();
   if(navigated){navigated=false;focusTop()}
+  if(window.readerSync)readerSync();
 }
 window.addEventListener("popstate",function(){navigated=true;route()});
 document.addEventListener("click",function(e){

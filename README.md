@@ -9,7 +9,7 @@ public/                    halaman statis (output Cloudflare Pages)
   og-image.png             gambar pratinjau 1200×630 untuk WhatsApp, Facebook, X, dll.
   index.html               situs publik
   admin.html               login + editor tulisan
-  assets/ app.js admin.js config.js styles.css theme.js
+  assets/ app.js admin.js config.js styles.css theme.js reader.js
   _headers 404.html favicon.svg favicon.ico favicon-48.png apple-touch-icon.png
 functions/                  backend (Pages Functions)
   index.js                 GET /               → beranda: daftar tulisan dirender di server + canonical + Open Graph
@@ -49,6 +49,14 @@ Tabel `images` dibuat otomatis saat unggah pertama; atau jalankan ulang `db/sche
 Tombol "Tema" di navigasi membuat pembaca bisa memilih: Otomatis (mengikuti terang/gelap perangkat), Kertas, Sepia, Hutan, Laut, Senja, Malam, dan Tinta.
 Pilihan disimpan di browser masing-masing pembaca. Warna tiap tema ada di `public/assets/styles.css` (blok "Tema"); daftar nama di `public/assets/theme.js`.
 Untuk menambah tema: tambahkan satu baris warna di CSS (selektor `:root[data-theme="nama"],.sw[data-t="nama"]`) dan satu entri `["nama","Label"]` di `theme.js`.
+
+## Kenyamanan membaca
+
+Di halaman tulisan, tombol "Baca" di navigasi membuka pengaturan: ukuran huruf (5 tingkat), jenis huruf (serif/sans), jarak baris, lebar teks,
+huruf awal besar, dan menyembunyikan menu saat menggulir. Ada juga bilah progres di atas layar, sisa waktu baca + tombol ke atas di pojok kanan bawah,
+tawaran "Lanjutkan dari …%" saat pembaca kembali ke tulisan yang belum selesai, dan foto yang bisa diklik untuk dibesarkan.
+Semua pilihan tersimpan di browser pembaca (localStorage `baca-catatan` dan `baca-posisi`). Kode di `public/assets/reader.js`; ukuran dan gayanya di blok "Pembaca" pada `styles.css`
+(nilai bawaan ada di `:root`, varian lewat atribut `data-fs`, `data-ff`, `data-lh`, `data-wd`, `data-dc`, `data-fm` pada `<html>`).
 
 ## Tautan di tulisan
 
